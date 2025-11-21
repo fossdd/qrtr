@@ -13,9 +13,10 @@ prefix = get_option('prefix')
 with_qrtr_ns = get_option('qrtr-ns')
 
 install_systemd_unit = get_option('systemd-service')
-systemd = dependency('systemd', required : install_systemd_unit)
-if systemd.found()
-        systemd_system_unit_dir = get_option('systemd-unit-prefix')
+systemd_system_unit_dir = get_option('systemd-unit-prefix')
+systemd = dependency('systemd', required : false)
+enable_systemd = (systemd.found() and not install_systemd_unit.disabled()) or (install_systemd_unit.enabled() and systemd_system_unit_dir != '')
+if enable_systemd
         if systemd_system_unit_dir == ''
                 systemd_system_unit_dir = systemd.get_variable(
                         pkgconfig : 'systemdsystemunitdir',
@@ -31,7 +32,7 @@ subdir('lib')
 subdir('include')
 subdir('src')
 
-if systemd.found() and with_qrtr_ns.enabled()
+if enable_systemd and with_qrtr_ns.enabled()
         systemd_unit_conf = configuration_data()
         systemd_unit_conf.set('prefix', prefix)
         configure_file(
